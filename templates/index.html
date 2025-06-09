@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blood Group Detection From Fingerprint</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: black;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .card {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #2F80ED;
+        }
+
+        p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin: 0 auto 20px auto;
+            padding: 12px;
+            border: 2px dashed #bbb;
+            border-radius: 12px;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            background-color: #fafafa;
+            transition: border 0.3s ease, background-color 0.3s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: #2F80ED;
+            background-color: #f0f8ff;
+        }
+
+        button {
+            background-color: #2F80ED;
+            color: #fff;
+            border: none;
+            padding: 14px 22px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #1A66D4;
+            transform: translateY(-2px);
+        }
+
+        #preview {
+            margin-top: 20px;
+        }
+
+        #preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #27AE60;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Blood Group Detection</h1>
+        <p>Upload your fingerprint image to detect your blood group.</p>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="fileInput" name="file" accept=".png, .jpg, .jpeg, .bmp" required />
+            <div id="preview"></div>
+            <button type="submit">Predict Blood Group</button>
+        </form>
+        <div id="result"></div>
+        <div class="footer">
+            © 2025 Project • Prototype
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const previewDiv = document.getElementById('preview');
+        const resultDiv = document.getElementById('result');
+
+        // Image preview and file validation
+        fileInput.addEventListener('change', () => {
+            previewDiv.innerHTML = '';  // Clear previous preview
+            resultDiv.innerHTML = '';   // Clear previous result
+
+            const file = fileInput.files[0];
+
+            if (!file) return; // No file selected
+
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/bmp'];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload PNG, JPG, JPEG, or BMP only.');
+                fileInput.value = '';  // Clear file input
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.alt = 'Selected Fingerprint Image';
+                previewDiv.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Form submit + async fetch
+        form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const file = fileInput.files[0];
+    if (!file) {
+        alert('Please select an image before submitting.');
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    resultDiv.innerHTML = 'Processing...';
+
+    try {
+        const response = await fetch('/predict', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        // ✅ Read and display the prediction result:
+        const data = await response.json();
+
+        resultDiv.innerHTML = `
+            Predicted Blood Group: <strong>${data.predicted_label}</strong> <br/>
+            Confidence: ${(data.confidence * 100).toFixed(2)}%
+        `;
+
+    } catch (error) {
+    resultDiv.innerHTML = `
+        The blood group is <strong>${data.predicted_label}</strong> <br/>
+        Confidence: ${(data.confidence * 100).toFixed(2)}%
+        `;
+    }
+});
+    </script>
+</body>
+</html>
